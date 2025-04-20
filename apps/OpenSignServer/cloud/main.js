@@ -53,6 +53,12 @@ import saveAsTemplate from './parsefunction/saveAsTemplate.js';
 import updateTenant from './parsefunction/updateTenant.js';
 import recreateDocument from './parsefunction/recreateDocument.js';
 
+import fetch from 'node-fetch';
+import Parse from 'parse/node';
+
+Parse.initialize(process.env.APP_ID, '', process.env.MASTER_KEY);
+Parse.serverURL = process.env.SERVER_URL;
+
 // This afterSave function triggers after an object is added or updated in the specified class, allowing for post-processing logic.
 Parse.Cloud.afterSave('contracts_Document', DocumentAftersave);
 Parse.Cloud.afterSave('contracts_Contactbook', ContactbookAftersave);
@@ -114,3 +120,57 @@ Parse.Cloud.define('forwarddoc', forwardDoc);
 Parse.Cloud.define('saveastemplate', saveAsTemplate);
 Parse.Cloud.define('updatetenant', updateTenant);
 Parse.Cloud.define('recreatedoc', recreateDocument);
+
+// ─── Webhook Helpers & Triggers ────────────────────────────────────────────────
+async function getWebhookUrl() {
+    const WebhookConfig = Parse.Object.extend('WebhookConfig');
+    const q = new Parse.Query(WebhookConfig);
+    const cfg = await q.first({ useMasterKey: true });
+    return cfg ? cfg.get('url') : null;
+  }
+  
+  async function sendWebhook(payload) {
+    const url = await getWebhookUrl();
+    if (!url) return;
+    try {
+      await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-api-token': process.env.MASTER_KEY
+        },
+        body: JSON.stringify(payload)
+      });
+    } catch (err) {
+      console.error('Webhook delivery failed:', err);
+    }
+  }
+  
+  // Fire when a new document is created
+  Parse.Cloud.afterSave('contracts_Document', async req => {
+    if (req.original) return;   // skip updates
+    const doc = req.object;
+    await sendWebhook({
+      event: 'created',
+      objectId: doc.id,
+      file: doc.get('file'),
+      name: doc.get('name'),
+      createdAt: doc.createdAt
+    });
+  });
+  
+  // Fire on signature state changes
+  Parse.Cloud.afterSave('contracts_Signature', async req => {
+    const sig = req.object;
+    const status = sig.get('status');  // 'viewed' | 'signed' | 'declined'
+    if (!['viewed','signed','declined'].includes(status)) return;
+    await sendWebhook({
+      event: status,
+      objectId: sig.get('documentId'),
+      file: sig.get('file'),
+      name: sig.get('name'),
+      viewedBy: sig.get('email'),
+      viewedAt: sig.get('viewedAt'),
+      createdAt: sig.createdAt
+    });
+});
