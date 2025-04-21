@@ -201,6 +201,9 @@ app.use(async function (req, res, next) {
 // Serve static assets from the /public folder
 app.use('/public', express.static(path.join(__dirname, '/public')));
 
+// Mount your custom express app
+app.use(process.env.PARSE_MOUNT || '/app', customRoute);
+
 // Serve the Parse API on the /parse URL prefix
 if (!process.env.TESTING) {
   const mountPath = process.env.PARSE_MOUNT || '/app';
@@ -213,8 +216,7 @@ if (!process.env.TESTING) {
     process.exit();
   }
 }
-// Mount your custom express app
-app.use('/', customRoute);
+
 
 // Parse Server plays nicely with the rest of your web routes
 app.get('/', function (req, res) {
