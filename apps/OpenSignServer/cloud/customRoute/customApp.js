@@ -14,7 +14,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Save or update the URL where you want OpenSign to POST events
-app.post('/app/webhook', async (req, res) => {
+app.post('/webhook', async (req, res) => {
     if (req.headers['x-api-token'] !== process.env.MASTER_KEY) {
       return res.status(401).send('Unauthorized');
     }
@@ -33,7 +33,7 @@ app.post('/app/webhook', async (req, res) => {
   });
   
   // Retrieve the currently saved webhook URL
-  app.get('/app/webhook', async (req, res) => {
+  app.get('/webhook', async (req, res) => {
     if (req.headers['x-api-token'] !== process.env.MASTER_KEY) {
       return res.status(401).send('Unauthorized');
     }
