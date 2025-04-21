@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import uploadFile from './uploadFile.js';
-import Parse from 'parse/node';
+import Parse from 'parse/node.js';
 
 export const app = express();
 

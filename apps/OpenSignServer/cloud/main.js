@@ -54,7 +54,7 @@ import updateTenant from './parsefunction/updateTenant.js';
 import recreateDocument from './parsefunction/recreateDocument.js';
 
 import fetch from 'node-fetch';
-import Parse from 'parse/node';
+import Parse from 'parse/node.js';
 
 Parse.initialize(process.env.APP_ID, '', process.env.MASTER_KEY);
 Parse.serverURL = process.env.SERVER_URL;
