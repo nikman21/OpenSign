@@ -5,12 +5,10 @@ import uploadFile from './uploadFile.js';
 import Parse from 'parse/node.js';
 
 export const app = express();
-
+dotenv.config();
 // Initialize Parse for WebhookConfig operations
 Parse.initialize(process.env.APP_ID, '', process.env.MASTER_KEY);
 Parse.serverURL = process.env.SERVER_URL;
-
-dotenv.config();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
