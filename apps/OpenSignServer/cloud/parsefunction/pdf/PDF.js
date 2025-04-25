@@ -20,6 +20,15 @@ const masterKEY = process.env.MASTER_KEY;
 const eSignName = 'OpenSign';
 const eSigncontact = 'hello@opensignlabs.com';
 
+export class FileEsque extends Blob {
+  constructor(parts, filename, options) {
+    super(parts, options);
+    this.name = filename;
+    this.lastModified = Date.now();
+    this.customId = null;
+  }
+}
+
 async function unlinkFile(path) {
   if (fs.existsSync(path)) {
     try {
@@ -32,17 +41,20 @@ async function unlinkFile(path) {
 
 // Upload PDF to Parse File storage
 async function uploadFile(pdfName, filepath) {
-  try {
-    const filedata = fs.readFileSync(filepath);
-    const file = new Parse.File(pdfName, [...filedata], 'application/pdf');
-    await file.save(null, { useMasterKey: true });
-    const fileRes = getSecureUrl(file.url());
-    return { imageUrl: fileRes.url };
-  } catch (err) {
-    console.log('Err in uploadFile:', err);
-    unlinkFile(filepath);
-    throw err;
+  // 1) read your signed PDF bytes
+  const fileData = fs.readFileSync(filepath);
+
+  // 2) wrap in a FileEsque for UploadThing
+  const fileEsque = new FileEsque([fileData], `${pdfName}.pdf`);
+
+  // 3) upload via your UploadThing route
+  const resp = await utapi.uploadFiles(fileEsque);
+  if (!resp.data?.ufsUrl) {
+    console.error('UploadThing upload failed:', resp.error);
+    throw new Error('Failed to upload signed PDF to UploadThing');
   }
+
+  return { imageUrl: resp.data.ufsUrl };
 }
 
 // Update contracts_Document record after signing
