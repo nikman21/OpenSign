@@ -5,6 +5,7 @@ import uploadFile from './uploadFile.js';
 import Parse from 'parse/node.js';
 
 export const app = express();
+
 dotenv.config();
 
 Parse.initialize(process.env.APP_ID, '', process.env.MASTER_KEY);
