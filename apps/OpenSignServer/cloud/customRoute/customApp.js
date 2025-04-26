@@ -21,7 +21,7 @@ app.post('/webhook', async (req, res) => {
   }
   const { url } = req.body;
   if (!url) {
-    return res.status(400).send('Missing url parameter');
+    return res.status(400).send('Missing url parameter.');
   }
   // Upsert singleton WebhookConfig
   const WebhookConfig = Parse.Object.extend('WebhookConfig');
